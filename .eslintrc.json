@@ -12,7 +12,8 @@
 		"prettier",
 		"plugin:prettier/recommended",
 		"plugin:@next/next/recommended",
-		"plugin:json/recommended"
+		"plugin:json/recommended",
+		"plugin:tailwindcss/recommended"
 	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
