@@ -6,6 +6,14 @@
 	--foreground-rgb: 0, 0, 0;
 	--background-start-rgb: 214, 219, 220;
 	--background-end-rgb: 255, 255, 255;
+	--color-red: rgb(255, 0, 0);
+	--color-blue: rgb(155, 208, 255);
+	--color-white: rgb(255, 255, 255);
+	--color-dark-gray: rgb(51, 52, 52);
+	--color-mid-gray: rgb(196, 196, 196);
+	--color-gray: rgb(212, 212, 212);
+	--color-light-gray: rgb(244, 244, 244);
+	--color-black: rgb(0, 0, 0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,8 +24,29 @@
 	}
 }
 
+html,
+body,
+#app {
+	height: 100%;
+}
+
 body {
+	font-family: var(--font-body);
 	color: rgb(var(--foreground-rgb));
-	background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
-		rgb(var(--background-start-rgb));
+	background: var(--background-end-rgb);
+	margin: 0;
+}
+
+::selection {
+	background: var(--color-blue);
+	color: var(--color-black);
+}
+
+::-moz-selection {
+	background: var(--color-blue);
+	color: var(--color-black);
+}
+
+a {
+	text-decoration: none;
 }
