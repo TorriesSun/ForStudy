@@ -112,3 +112,11 @@ Cypress integration test:
 Eslint
 
 -   https://eslint.org/docs/rules/
+
+TanStack Query v4
+
+-   https://tanstack.com/query/latest/docs/react/overview
+
+React hot toast
+
+-   https://react-hot-toast.com/docs
