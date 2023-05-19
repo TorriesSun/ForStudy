@@ -1,5 +1,11 @@
+import AuthProvider from '@/components/Auth';
+
 const ChatPage = () => {
-	return <div>Chat</div>;
+	return (
+		<AuthProvider>
+			<div>Chat</div>
+		</AuthProvider>
+	);
 };
 
 export default ChatPage;
