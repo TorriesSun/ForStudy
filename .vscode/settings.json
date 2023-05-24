@@ -19,6 +19,6 @@
 		"source.fixAll.stylelint": true
 	},
 	"editor.formatOnSave": true,
-	"cSpell.words": ["metatree", "nextjs", "stylelint", "tanstack", "reduxjs"],
+	"cSpell.words": ["metatree", "nextjs", "stylelint", "tanstack", "reduxjs", "tabler"],
 	"css.customData": ["./.vscode/css-data.json"]
 }

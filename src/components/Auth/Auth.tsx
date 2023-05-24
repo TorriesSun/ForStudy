@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { initMe, selectUser } from '@/store/slices/userSlice';
 
-const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const dispatch = useAppDispatch();
 
 	useEffect(() => {
