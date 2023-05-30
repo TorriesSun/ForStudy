@@ -14,3 +14,11 @@ export const checkCSR = (): boolean => typeof window !== 'undefined';
 
 export const checkRichTextEmpty = (context = ''): boolean =>
 	context.replace(/<(.|\n)*?>/g, '').trim().length === 0;
+
+/**
+ * @description
+ * Check whether the time is valid
+ * @return {boolean}
+ */
+
+export const checkValidTime = (time: string): boolean => /^([1-9]\d{12})$/.test(time);

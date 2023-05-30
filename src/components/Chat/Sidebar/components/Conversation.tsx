@@ -1,21 +1,22 @@
 import { IconCheck, IconMessage, IconPencil, IconTrash, IconX } from '@tabler/icons-react';
+import { useRouter } from 'next/router';
 import { KeyboardEvent, MouseEventHandler, useEffect, useState } from 'react';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import {
 	deleteConversation,
-	fetchMyConversationByIdAsync,
 	selectConversationState,
 	updateConversation
 } from '@/store/slices/conversationSlice';
 
 interface Props {
-	conversation: IConversation;
+	conversation: TConversationInList;
 }
 
 const ConversationComponent = ({ conversation }: Props) => {
 	const dispatch = useAppDispatch();
+	const router = useRouter();
 	const { currentConversation } = useAppSelector(selectConversationState);
 
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -24,7 +25,11 @@ const ConversationComponent = ({ conversation }: Props) => {
 
 	const handleSelectConversation = (id: string) => {
 		if (currentConversation?.id !== id) {
-			dispatch(fetchMyConversationByIdAsync(id));
+			router.push({
+				query: {
+					id
+				}
+			});
 		}
 	};
 

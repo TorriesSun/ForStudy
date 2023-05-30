@@ -1,4 +1,5 @@
 import { IconMistOff, IconPlus } from '@tabler/icons-react';
+import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 import ConversationComponent from './components/Conversation';
@@ -6,6 +7,7 @@ import { CloseSidebarButton, OpenSidebarButton } from './components/OpenCloseBut
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import {
 	createConversation,
+	fetchMyConversationByIdAsync,
 	fetchMyConversationsAsync,
 	selectConversationState
 } from '@/store/slices/conversationSlice';
@@ -18,12 +20,20 @@ interface Props {
 
 const Sidebar = ({ isOpen, side, toggleOpen }: Props) => {
 	const dispatch = useAppDispatch();
+	const router = useRouter();
 	const { conversations } = useAppSelector(selectConversationState);
 
 	useEffect(() => {
 		// Get conversations
 		dispatch(fetchMyConversationsAsync());
 	}, []);
+
+	useEffect(() => {
+		// Get conversation by id
+		if (router.isReady && router.query.id) {
+			dispatch(fetchMyConversationByIdAsync(router.query.id as string));
+		}
+	}, [router.query.id]);
 
 	const handleCreateItem = () => {
 		dispatch(
@@ -45,7 +55,7 @@ const Sidebar = ({ isOpen, side, toggleOpen }: Props) => {
 						}}
 					>
 						<IconPlus size={16} />
-						New Chat
+						创建新对话
 					</button>
 				</div>
 				<div className="grow overflow-auto">

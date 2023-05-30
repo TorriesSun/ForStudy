@@ -19,7 +19,7 @@ interface IRequest {
 	url: string;
 }
 const baseURL = getApiUrl();
-const timeout = 30000;
+const timeout = 300000;
 
 const axiosInstance = axios.create({
 	baseURL,
