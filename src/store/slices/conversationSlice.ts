@@ -3,14 +3,16 @@ import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
 	createConversationByUser,
 	deleteConversationById,
+	deleteMessageById,
 	fetchMyConversationById,
 	fetchMyConversations,
+	sendMessageByConversationId,
 	updateConversationById
 } from '@/services/conversation.service';
 import type { AppState, AppThunk } from '@/store/store';
 
 export interface ConversationState {
-	conversations: IConversation[];
+	conversations: TConversationInList[];
 	currentConversation: IConversation | undefined;
 	conversationsStatus: TStateAsyncStatus;
 	currentConversationStatus: TStateAsyncStatus;
@@ -44,15 +46,34 @@ export const ConversationSlice = createSlice({
 	initialState,
 	reducers: {
 		// Use the PayloadAction type to declare the contents of `action.payload`
-		updateConversations: (state, action: PayloadAction<IConversation[]>) => {
+		updateConversations: (state, action: PayloadAction<TConversationInList[]>) => {
 			state.conversations = action.payload;
 		},
-		updateCurrentConversation: (state, action: PayloadAction<Partial<IConversation>>) => {
+		addMessageToCurrentConversation: (state, action: PayloadAction<IMessage>) => {
 			if (state.currentConversation) {
-				state.currentConversation = {
+				state.currentConversation.messages.push(action.payload);
+			}
+		},
+		updateCurrentConversation: (
+			state,
+			action: PayloadAction<Partial<IConversation> | IConversation>
+		) => {
+			let conversation: IConversation;
+			if (state.currentConversation) {
+				conversation = {
 					...state.currentConversation,
 					...action.payload
 				};
+			} else {
+				conversation = action.payload as IConversation;
+			}
+			state.currentConversation = conversation;
+			// update the conversation in the list
+			const index = state.conversations.findIndex(
+				item => item.id === state.currentConversation?.id
+			);
+			if (index !== -1) {
+				state.conversations[index] = state.currentConversation;
 			}
 		},
 		unselectCurrentConversation: state => {
@@ -82,8 +103,12 @@ export const ConversationSlice = createSlice({
 	}
 });
 
-export const { updateConversations, updateCurrentConversation, unselectCurrentConversation } =
-	ConversationSlice.actions;
+export const {
+	updateConversations,
+	addMessageToCurrentConversation,
+	updateCurrentConversation,
+	unselectCurrentConversation
+} = ConversationSlice.actions;
 
 export const selectConversationState = (state: AppState) => state.conversation;
 
@@ -96,10 +121,12 @@ export const fetchConversations = (): AppThunk => async dispatch => {
 
 export const createConversation =
 	(payload: TCreateConversationPayload): AppThunk =>
-	async dispatch => {
+	async (dispatch, getState) => {
 		const conversationResponse = await createConversationByUser(payload);
 		if (conversationResponse.status === 201) {
-			dispatch(fetchConversations());
+			const { conversations } = getState().conversation;
+			dispatch(updateConversations([conversationResponse.data.doc, ...conversations]));
+			dispatch(updateCurrentConversation(conversationResponse.data.doc));
 		}
 	};
 
@@ -113,10 +140,20 @@ export const updateConversation =
 			if (currentConversation?.id === payload.id) {
 				dispatch(updateCurrentConversation(payload));
 			}
-			if (
-				conversations?.some((conversation: IConversation) => conversation.id === payload.id)
-			) {
-				dispatch(fetchConversations());
+			if (conversations?.some(conversation => conversation.id === payload.id)) {
+				dispatch(
+					updateConversations(
+						conversations.map(conversation => {
+							if (conversation.id === payload.id) {
+								return {
+									...conversation,
+									...payload
+								};
+							}
+							return conversation;
+						})
+					)
+				);
 			}
 		}
 	};
@@ -130,8 +167,50 @@ export const deleteConversation =
 			if (currentConversation?.id === id) {
 				dispatch(unselectCurrentConversation());
 			}
-			if (conversations?.some((conversation: IConversation) => conversation.id === id)) {
-				dispatch(fetchConversations());
+			if (conversations?.some(conversation => conversation.id === id)) {
+				dispatch(
+					updateConversations(
+						conversations.filter(conversation => conversation.id !== id)
+					)
+				);
+			}
+		}
+	};
+
+export const sendMessage =
+	(payload: ISendMessagePayload): AppThunk =>
+	async (dispatch, getState) => {
+		const response = await sendMessageByConversationId(payload);
+		if (response.status === 200) {
+			const AIMessage = response.data;
+			const { currentConversation } = getState().conversation;
+			if (currentConversation?.id === payload.id) {
+				dispatch(
+					updateCurrentConversation({
+						messages: [...(currentConversation.messages || []), AIMessage]
+					})
+				);
+			}
+		}
+	};
+
+export const deleteMessageByMessageId =
+	(conversationId: string, messageId: string): AppThunk =>
+	async (dispatch, getState) => {
+		const response = await deleteMessageById(conversationId, messageId);
+		if (response.status === 200) {
+			const { currentConversation } = getState().conversation;
+			if (currentConversation?.id === conversationId) {
+				const messageIndex = currentConversation.messages.findIndex(
+					item => item.id === messageId
+				);
+				if (messageIndex > -1) {
+					dispatch(
+						updateCurrentConversation({
+							messages: currentConversation.messages.slice(0, messageIndex)
+						})
+					);
+				}
 			}
 		}
 	};

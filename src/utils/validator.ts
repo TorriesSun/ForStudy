@@ -10,4 +10,17 @@ const emailReg = /^[A-Za-z0-9]+([_\.][A-Za-z0-9]+)*@([A-Za-z0-9\-]+\.)+[A-Za-z]{
 
 const isEmail = (email: string): boolean => emailReg.test(email);
 
+/**
+ * @description
+ * Check whether it is a mobile
+ * @return {boolean} return a boolean
+ */
+
+export const isMobile = () => {
+	const userAgent = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
+	const mobileRegex =
+		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
+	return mobileRegex.test(userAgent);
+};
+
 export default isEmail;

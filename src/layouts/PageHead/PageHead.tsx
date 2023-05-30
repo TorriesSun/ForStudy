@@ -63,6 +63,10 @@ const PageHead: React.FC<PageHeadProps> = props => {
 			<title>
 				{meta?.title ? `${meta?.title} | Metatree AI` : `${pageTitle}Metatree AI`}
 			</title>
+			<meta
+				name="viewport"
+				content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
+			/>
 			{metaList.map(m => (
 				<meta
 					name={m.name}
