@@ -1,4 +1,4 @@
-import { merge, omitBy } from 'lodash';
+import { isUndefined, merge, omitBy } from 'lodash';
 
 const memoryStore = new Map();
 
@@ -55,10 +55,12 @@ export function put<T>(key: string, value: T, memory = false): T {
 		return memoryStore.get(makeKey(key));
 	}
 
-	store.setItem(
-		makeKey(key),
-		JSON.stringify(value, (jKey, jValue) => (/^\${2}/.test(jKey) ? undefined : jValue))
-	);
+	if (!isUndefined(value)) {
+		store.setItem(
+			makeKey(key),
+			JSON.stringify(value, (jKey, jValue) => (/^\${2}/.test(jKey) ? undefined : jValue))
+		);
+	}
 
 	return get<T>(key);
 }

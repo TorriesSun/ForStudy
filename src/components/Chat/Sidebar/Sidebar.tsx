@@ -2,8 +2,10 @@ import { IconMistOff, IconPlus } from '@tabler/icons-react';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
+import ChatBarSettings from './components/ChatBarSettings/ChatBarSetting';
+import CloseSidebarButton from './components/CloseSidebarButton/CloseSidebarButton';
 import ConversationComponent from './components/Conversation';
-import { CloseSidebarButton, OpenSidebarButton } from './components/OpenCloseButton';
+import OpenSidebarButton from './components/OpenSidebarButton/OpenSidebarButton';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import {
 	createConversation,
@@ -75,6 +77,7 @@ const Sidebar = ({ isOpen, side, toggleOpen }: Props) => {
 						</div>
 					)}
 				</div>
+				<ChatBarSettings />
 			</div>
 
 			<CloseSidebarButton onClick={toggleOpen} side={side} />

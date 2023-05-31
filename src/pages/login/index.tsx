@@ -1,3 +1,4 @@
+import { pick } from 'lodash';
 import { useRouter } from 'next/router';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -5,10 +6,11 @@ import toast from 'react-hot-toast';
 
 import Input from '@/components/FormComponents/FormInput/FormInput';
 import FormLabel from '@/components/FormComponents/FormLabel/FormLabel';
-import { TOKEN } from '@/constants/storeLocation';
+import { AUTH } from '@/constants/storeLocation';
 import DefaultLayout from '@/layouts/DefaultLayout/DefaultLayout';
 import PageHead from '@/layouts/PageHead/PageHead';
 import { login } from '@/services/auth.service';
+import { put as storePut } from '@/utils/storageHelper';
 import isEmail from '@/utils/validator';
 
 type FormData = {
@@ -36,7 +38,9 @@ const LoginPage: ComponentType = () => {
 				if (res.status === 401) {
 					throw new Error('登陆验证失败，请核对您输入的邮箱和密码');
 				} else if (res.status === 200) {
-					if (res.data.token) localStorage.setItem(TOKEN, res.data.token);
+					if (res.data) {
+						storePut(AUTH, pick(res.data, ['token', 'exp']));
+					}
 					toast.success('登陆成功。');
 					router.push('/chat');
 				}

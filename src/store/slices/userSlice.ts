@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash';
 import { USER } from '@/constants/storeLocation';
 import { fetchMe } from '@/services/user.service';
 import type { AppState, AppThunk } from '@/store/store';
-import { get as storeGet, put as storePut } from '@/utils/storageHelper';
+import { delAll, get as storeGet, put as storePut } from '@/utils/storageHelper';
 
 export interface UserState {
 	user: IUser | null;
@@ -36,6 +36,10 @@ export const userSlice = createSlice({
 		// Initial my user state from action payload
 		initUser: (state, action: PayloadAction<IUser>) => {
 			state.user = action.payload;
+		},
+		// Clear my user state
+		clearUser: state => {
+			state.user = null;
 		}
 	},
 	// The `extraReducers` field lets the slice handle actions defined elsewhere,
@@ -53,7 +57,7 @@ export const userSlice = createSlice({
 	}
 });
 
-export const { initUser } = userSlice.actions;
+export const { initUser, clearUser } = userSlice.actions;
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of
@@ -73,6 +77,11 @@ export const initMe = (): AppThunk => async (dispatch, getState) => {
 			dispatch(fetchMeAsync());
 		}
 	}
+};
+
+export const handleLogout = (): AppThunk => async dispatch => {
+	delAll();
+	dispatch(userSlice.actions.clearUser());
 };
 
 export default userSlice.reducer;

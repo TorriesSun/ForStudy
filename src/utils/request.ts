@@ -2,8 +2,9 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { DEVELOPMENT_API_URL, PRODUCTION_API_URL, UAT_API_URL } from '@/constants/apiUrl';
 import { PRODUCTION, UAT } from '@/constants/env';
-import { TOKEN } from '@/constants/storeLocation';
+import { AUTH } from '@/constants/storeLocation';
 import { checkCSR } from '@/utils/checkHelper';
+import { get as storeGet } from '@/utils/storageHelper';
 
 const getApiUrl = () => {
 	const environment = process.env.NODE_ENV;
@@ -42,10 +43,11 @@ axiosInstance.interceptors.response.use(
 );
 
 export default function request(options: AxiosRequestConfig & IRequest) {
+	const auth: TAuth = storeGet(AUTH);
 	return axiosInstance({
 		...options,
 		headers: {
-			Authorization: checkCSR() ? `JWT ${localStorage.getItem(TOKEN) || ''}` : ''
+			Authorization: checkCSR() ? `JWT ${auth.token || ''}` : ''
 		}
 	})
 		.then(response => response)
