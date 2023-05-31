@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 
-export const login = async (payload: ILoginPayload) =>
+export const login = async (payload: TLoginPayload) =>
 	request({
 		method: 'POST',
 		url: '/api/users/login',
