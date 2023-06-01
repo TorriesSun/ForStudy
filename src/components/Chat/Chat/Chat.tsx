@@ -1,5 +1,6 @@
 import { last } from 'lodash';
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import ChatInput from './components/ChatInput';
 import ChatLoader from './components/ChatLoader/ChatLoader';
@@ -160,6 +161,9 @@ const Chat = ({ stopConversationRef }: Props) => {
 						})
 					);
 				} else {
+					if (response.status === 406) {
+						toast.error('对话字数已超出限制，请开启新对话。');
+					}
 					dispatch(fetchMyConversationByIdAsync(currentConversation.id));
 				}
 			}
