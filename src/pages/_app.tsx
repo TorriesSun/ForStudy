@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
 import { Fragment } from 'react';
 import { Toaster } from 'react-hot-toast';
@@ -17,14 +16,10 @@ const App = ({ Component, pageProps }: Props) => {
 	const getLayout = Component.getLayout ?? (page => page);
 	const Layout = Component.layout ?? Fragment;
 
-	const queryClient = new QueryClient();
-
 	return (
 		<Provider store={store}>
 			<Toaster />
-			<QueryClientProvider client={queryClient}>
-				<Layout>{getLayout(<Component {...pageProps} />)}</Layout>
-			</QueryClientProvider>
+			<Layout>{getLayout(<Component {...pageProps} />)}</Layout>
 		</Provider>
 	);
 };
