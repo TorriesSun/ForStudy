@@ -32,17 +32,20 @@ export const deleteConversationById = async (id: string) =>
 		url: `/api/conversations/${id}`
 	});
 
-export const sendMessageByConversationId = async ({ id, ...data }: ISendMessagePayload) =>
-	request({
-		method: 'PATCH',
-		url: `/api/conversations/${id}/sendMessage`,
-		data
-	});
-
-export const deleteMessageById = async (conversationId: string, messageId: string) =>
+export const deleteConversationMessage = async (conversationId: string, messageId: string) =>
 	request({
 		method: 'DELETE',
 		url: `/api/conversations/${conversationId}/messages/${messageId}`
+	});
+
+export const updateConversationMessages = async ({
+	id,
+	...data
+}: TUpdateConversationMessagesPayload) =>
+	request({
+		method: 'PATCH',
+		url: `/api/conversations/${id}/messages/`,
+		data
 	});
 
 export default fetchMyConversations;

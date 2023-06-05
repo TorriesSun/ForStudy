@@ -111,6 +111,7 @@
 		"@typescript-eslint/no-var-requires": "off",
 		"import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
 		"@tanstack/query/exhaustive-deps": "error",
-		"@tanstack/query/prefer-query-object-syntax": "error"
+		"@tanstack/query/prefer-query-object-syntax": "error",
+		"@typescript-eslint/no-explicit-any": "off"
 	}
 }
