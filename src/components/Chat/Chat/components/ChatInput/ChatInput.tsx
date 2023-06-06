@@ -11,6 +11,7 @@ interface Props {
 	onSend: (message: IMessage) => void;
 	onRegenerate: () => void;
 	onScrollDownClick: () => void;
+	stopConversationRef: MutableRefObject<boolean>;
 	textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
 	showScrollDownButton: boolean;
 	messageIsStreaming: boolean;
@@ -20,6 +21,7 @@ const ChatInput = ({
 	onSend,
 	onRegenerate,
 	onScrollDownClick,
+	stopConversationRef,
 	textareaRef,
 	showScrollDownButton,
 	messageIsStreaming
@@ -71,6 +73,13 @@ const ChatInput = ({
 		}
 	};
 
+	const handleStopConversation = () => {
+		stopConversationRef.current = true;
+		setTimeout(() => {
+			stopConversationRef.current = false;
+		}, 1000);
+	};
+
 	useEffect(() => {
 		if (textareaRef && textareaRef.current) {
 			textareaRef.current.style.height = 'inherit';
@@ -87,9 +96,10 @@ const ChatInput = ({
 				{messageIsStreaming && (
 					<button
 						type="button"
-						className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit cursor-wait items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-2 text-black hover:opacity-50 md:mb-0 md:mt-2"
+						className="absolute inset-x-0 top-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-2 text-black hover:opacity-50 md:mb-0 md:mt-2"
+						onClick={handleStopConversation}
 					>
-						<IconLoader size={16} /> 生成中，请耐心等待
+						<IconLoader size={16} /> 停止生成
 					</button>
 				)}
 

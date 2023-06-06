@@ -6,17 +6,17 @@ import ChatInput from './components/ChatInput';
 import ChatLoader from './components/ChatLoader/ChatLoader';
 import MemoizedChatMessage from './components/MemoizedChatMessage/MemoizedChatMessage';
 import EChatRole from '@/constants/chat';
+import { AUTH } from '@/constants/storeLocation';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
-import { sendMessageByConversationId } from '@/services/conversation.service';
 import {
-	addMessageToCurrentConversation,
 	fetchMyConversationByIdAsync,
+	pushConversationMessages,
 	selectConversationState,
-	updateConversation,
 	updateCurrentConversation
 } from '@/store/slices/conversationSlice';
 import { checkValidTime } from '@/utils/checkHelper';
 import { throttle } from '@/utils/data/throttle';
+import { get as storeGet } from '@/utils/storageHelper';
 
 interface Props {
 	stopConversationRef: MutableRefObject<boolean>;
@@ -101,71 +101,131 @@ const Chat = ({ stopConversationRef }: Props) => {
 		// If message has an id, it means the message is required to regenerated
 		async (message: IMessage) => {
 			if (currentConversation) {
+				let updatedMessages: IMessage[];
 				const { content } = message;
-				if (message.id) {
-					// delete the message and the ones that come after
-					const messageIndex = currentConversation.messages.findIndex(
-						item => item.id === message.id
-					);
-					if (messageIndex < 0) return;
-					const retainedMessages = currentConversation.messages.slice(0, messageIndex);
-					// update messages in store
-					dispatch(
-						updateCurrentConversation({
-							messages: retainedMessages
-						})
-					);
-				}
 				// create human message object
 				const tempHumanMessageId = Date.now().toString();
 				const humanMessage: IMessage = {
 					...message,
 					id: tempHumanMessageId
 				};
-				// add the human message to store
-				dispatch(addMessageToCurrentConversation(humanMessage));
+				if (message.id) {
+					// delete the message and the ones that come after
+					const messageIndex = currentConversation.messages.findIndex(
+						item => item.id === message.id
+					);
+					if (messageIndex < 0) return;
+					updatedMessages = currentConversation.messages.slice(0, messageIndex);
+					updatedMessages.push(humanMessage);
+				} else {
+					updatedMessages = [...currentConversation.messages, humanMessage];
+				}
+
+				dispatch(updateCurrentConversation({ messages: updatedMessages }));
 
 				setLoading(true);
 				setMessageIsStreaming(true);
 
 				// Send the human message to server
-				const response = await sendMessageByConversationId({
-					id: currentConversation.id,
-					message: {
-						content,
-						// checkValidTime is used to check if the message is a new message or a regenerated one
-						...(message.id && !checkValidTime(message.id) ? { id: message.id } : {})
-					}
+				const controller = new AbortController();
+				const auth: TAuth = storeGet(AUTH);
+				const response = await fetch('api/chat', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `JWT ${auth.token}`
+					},
+					signal: controller.signal,
+					body: JSON.stringify({
+						id: currentConversation.id,
+						message: {
+							content,
+							// checkValidTime is used to check if the message is a new message or a regenerated one
+							...(message.id && !checkValidTime(message.id) ? { id: message.id } : {})
+						}
+					})
 				});
 
-				setMessageIsStreaming(false);
-				setLoading(false);
+				if (!response.ok) {
+					setMessageIsStreaming(false);
+					setLoading(false);
+					const [statusCode, statusText] = response.statusText.split('||');
+					const errorMessage =
+						statusCode === '424' ? '对话字数已超出限制，请开启新对话。' : statusText;
+					toast.error(errorMessage);
+					dispatch(fetchMyConversationByIdAsync(currentConversation.id));
+					return;
+				}
+
+				const data = response.body;
+
+				if (!data) {
+					setMessageIsStreaming(false);
+					setLoading(false);
+					return;
+				}
 
 				// Update conversation title
-				if (currentConversation.messages?.length === 0) {
+				if (updatedMessages?.length === 0) {
 					const customTitle =
 						content.length > 30 ? `${content.substring(0, 30)}...` : content;
 					dispatch(
-						updateConversation({
-							id: currentConversation.id,
+						updateCurrentConversation({
 							title: customTitle
 						})
 					);
 				}
 
-				// update new messages with the ai response to store
-				if (response.status === 200) {
-					dispatch(
-						updateCurrentConversation({
-							messages: response.data
-						})
-					);
-				} else {
-					if (response.status === 406) {
-						toast.error('对话字数已超出限制，请开启新对话。');
+				setLoading(false);
+
+				const reader = data.getReader();
+				const decoder = new TextDecoder();
+				let done = false;
+				let isFirst = true;
+				let text = '';
+				const aiMessageId = Date.now().toString();
+				while (!done) {
+					if (stopConversationRef.current === true) {
+						controller.abort();
+						done = true;
+						break;
 					}
-					dispatch(fetchMyConversationByIdAsync(currentConversation.id));
+					// eslint-disable-next-line no-await-in-loop
+					const { value, done: doneReading } = await reader.read();
+					done = doneReading;
+					const chunkValue = decoder.decode(value);
+					text += chunkValue;
+					if (isFirst) {
+						isFirst = false;
+						updatedMessages = [
+							...updatedMessages,
+							{ id: aiMessageId, role: 'ai', content: chunkValue }
+						];
+						dispatch(updateCurrentConversation({ messages: updatedMessages }));
+					} else {
+						// eslint-disable-next-line no-loop-func
+						updatedMessages = updatedMessages.map(item => {
+							if (item.id === aiMessageId) {
+								return {
+									...item,
+									content: text
+								};
+							}
+							return item;
+						});
+						dispatch(updateCurrentConversation({ messages: updatedMessages }));
+					}
 				}
+
+				setMessageIsStreaming(false);
+
+				// update new messages to the server
+				dispatch(
+					pushConversationMessages({
+						id: currentConversation.id,
+						messages: updatedMessages.slice(-1)
+					})
+				);
 			}
 		},
 		[currentConversation, stopConversationRef]
@@ -207,6 +267,7 @@ const Chat = ({ stopConversationRef }: Props) => {
 			</div>
 
 			<ChatInput
+				stopConversationRef={stopConversationRef}
 				textareaRef={textareaRef}
 				onSend={handleSend}
 				onScrollDownClick={handleScrollDown}

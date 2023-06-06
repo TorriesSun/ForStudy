@@ -6,7 +6,7 @@ import { AUTH } from '@/constants/storeLocation';
 import { checkCSR } from '@/utils/checkHelper';
 import { get as storeGet } from '@/utils/storageHelper';
 
-const getApiUrl = () => {
+export const getApiUrl = () => {
 	const environment = process.env.NODE_ENV;
 	if (environment === PRODUCTION) {
 		if (process.env.NEXT_PUBLIC_NEXT_ENV === UAT) return UAT_API_URL;
@@ -20,7 +20,7 @@ interface IRequest {
 	url: string;
 }
 const baseURL = getApiUrl();
-const timeout = 300000;
+const timeout = 30000;
 
 const axiosInstance = axios.create({
 	baseURL,

@@ -15,7 +15,13 @@ type TConversationInList = Pick<IConversation, 'id' | 'title' | 'updatedAt'>;
 
 type TCreateConversationPayload = Pick<IConversation, 'title'>;
 
-type TUpdateConversationPayload = Partial<Pick<IConversation, 'title'>> & { id: string };
+type TUpdateConversationPayload = Partial<Pick<IConversation, 'title' | 'messages'>> & {
+	id: string;
+};
+
+type TUpdateConversationMessagesPayload = Pick<IConversation, 'messages'> & {
+	id: string;
+};
 
 interface ISendMessagePayload {
 	id: string;

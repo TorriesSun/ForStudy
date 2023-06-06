@@ -1,13 +1,14 @@
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { orderBy } from 'lodash';
 
 import {
 	createConversationByUser,
 	deleteConversationById,
-	deleteMessageById,
+	deleteConversationMessage,
 	fetchMyConversationById,
 	fetchMyConversations,
-	sendMessageByConversationId,
-	updateConversationById
+	updateConversationById,
+	updateConversationMessages
 } from '@/services/conversation.service';
 import type { AppState, AppThunk } from '@/store/store';
 
@@ -49,11 +50,6 @@ export const ConversationSlice = createSlice({
 		updateConversations: (state, action: PayloadAction<TConversationInList[]>) => {
 			state.conversations = action.payload;
 		},
-		addMessageToCurrentConversation: (state, action: PayloadAction<IMessage>) => {
-			if (state.currentConversation) {
-				state.currentConversation.messages.push(action.payload);
-			}
-		},
 		updateCurrentConversation: (
 			state,
 			action: PayloadAction<Partial<IConversation> | IConversation>
@@ -69,12 +65,13 @@ export const ConversationSlice = createSlice({
 			}
 			state.currentConversation = conversation;
 			// update the conversation in the list
-			const index = state.conversations.findIndex(
-				item => item.id === state.currentConversation?.id
+			state.conversations = orderBy(
+				state.conversations.map(item =>
+					item.id === conversation.id ? conversation : item
+				),
+				'updatedAt',
+				'desc'
 			);
-			if (index !== -1) {
-				state.conversations[index] = state.currentConversation;
-			}
 		},
 		unselectCurrentConversation: state => {
 			state.currentConversation = undefined;
@@ -103,12 +100,8 @@ export const ConversationSlice = createSlice({
 	}
 });
 
-export const {
-	updateConversations,
-	addMessageToCurrentConversation,
-	updateCurrentConversation,
-	unselectCurrentConversation
-} = ConversationSlice.actions;
+export const { updateConversations, updateCurrentConversation, unselectCurrentConversation } =
+	ConversationSlice.actions;
 
 export const selectConversationState = (state: AppState) => state.conversation;
 
@@ -130,7 +123,6 @@ export const createConversation =
 		}
 	};
 
-// This is used for updating a conversation, except for the chat history
 export const updateConversation =
 	(payload: TUpdateConversationPayload): AppThunk =>
 	async (dispatch, getState) => {
@@ -138,7 +130,7 @@ export const updateConversation =
 		if (conversationResponse.status === 200) {
 			const { currentConversation, conversations } = getState().conversation;
 			if (currentConversation?.id === payload.id) {
-				dispatch(updateCurrentConversation(payload));
+				dispatch(updateCurrentConversation(conversationResponse.data.doc));
 			}
 			if (conversations?.some(conversation => conversation.id === payload.id)) {
 				dispatch(
@@ -154,6 +146,18 @@ export const updateConversation =
 						})
 					)
 				);
+			}
+		}
+	};
+
+export const pushConversationMessages =
+	(payload: TUpdateConversationMessagesPayload): AppThunk =>
+	async (dispatch, getState) => {
+		const conversationResponse = await updateConversationMessages(payload);
+		if (conversationResponse.status === 200) {
+			const { currentConversation } = getState().conversation;
+			if (currentConversation?.id === payload.id) {
+				dispatch(updateCurrentConversation(conversationResponse.data));
 			}
 		}
 	};
@@ -177,40 +181,14 @@ export const deleteConversation =
 		}
 	};
 
-export const sendMessage =
-	(payload: ISendMessagePayload): AppThunk =>
-	async (dispatch, getState) => {
-		const response = await sendMessageByConversationId(payload);
-		if (response.status === 200) {
-			const AIMessage = response.data;
-			const { currentConversation } = getState().conversation;
-			if (currentConversation?.id === payload.id) {
-				dispatch(
-					updateCurrentConversation({
-						messages: [...(currentConversation.messages || []), AIMessage]
-					})
-				);
-			}
-		}
-	};
-
 export const deleteMessageByMessageId =
 	(conversationId: string, messageId: string): AppThunk =>
 	async (dispatch, getState) => {
-		const response = await deleteMessageById(conversationId, messageId);
+		const response = await deleteConversationMessage(conversationId, messageId);
 		if (response.status === 200) {
 			const { currentConversation } = getState().conversation;
 			if (currentConversation?.id === conversationId) {
-				const messageIndex = currentConversation.messages.findIndex(
-					item => item.id === messageId
-				);
-				if (messageIndex > -1) {
-					dispatch(
-						updateCurrentConversation({
-							messages: currentConversation.messages.slice(0, messageIndex)
-						})
-					);
-				}
+				dispatch(updateCurrentConversation(response.data));
 			}
 		}
 	};
