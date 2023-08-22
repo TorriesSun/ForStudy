@@ -4,7 +4,7 @@ Launch Metatree AI NextJS
 (node.js: version **16.x**)
 
 ```bash
-$ git clone https://username@bitbucket.org/jiang_ren/metatree-ai-nextjs.git
+$ git clone https://github.com/TorriesSun/ForStudy.git
 $ cd metatree-ai-nextjs
 $ npm install
 $ npm run dev    # visit http://localhost:8000
